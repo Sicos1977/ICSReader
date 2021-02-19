@@ -6,7 +6,7 @@
     <Authors>Kees van Spelde</Authors>
     <Company>Magic-Sessions</Company>
     <Description>Converts an ICS file to HTML</Description>
-    <Copyright>(c)</Copyright>
+    <Copyright>(c) 2021 - Kees van Spelde</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Sicos1977/ICSReader</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Sicos1977/ICSReader</RepositoryUrl>
@@ -14,6 +14,7 @@
     <PackageTags>ICS HTML</PackageTags>
     <PackageReleaseNotes>- Converts an ICS file to HTML</PackageReleaseNotes>
     <PackageIcon>ics-icon.png</PackageIcon>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
