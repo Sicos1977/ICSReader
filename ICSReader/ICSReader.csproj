@@ -2,6 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Kees van Spelde</Authors>
+    <Company>Magic-Sessions</Company>
+    <Description>Converts an ICS file to HTML</Description>
+    <Copyright>(c)</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Sicos1977/ICSReader</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Sicos1977/ICSReader</RepositoryUrl>
+    <RepositoryType>GitHub</RepositoryType>
+    <PackageTags>ICS HTML</PackageTags>
+    <PackageReleaseNotes>- Converts an ICS file to HTML</PackageReleaseNotes>
+    <PackageIcon>ics-icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +37,13 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>LanguageConsts.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ics-icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
