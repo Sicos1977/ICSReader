@@ -91,7 +91,7 @@ namespace ICSViewer
                     var icsReader = new Reader();
                     //msgReader.SetCulture("nl-NL");
                     //msgReader.SetCulture("de-DE");
-                    var files = icsReader.ExtractToFolder(openFileDialog1.FileName, tempFolder);
+                    var files = icsReader.Read(openFileDialog1.FileName, tempFolder);
 
                     if (!string.IsNullOrEmpty(files[0]))
                         webBrowser1.Navigate(files[0]);
