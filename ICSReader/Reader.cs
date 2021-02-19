@@ -1,8 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Web;
-using Ical.Net;
+using ICSReader.Exceptions;
+using ICSReader.Helpers;
+using ICSReader.Localization;
+using Calendar = Ical.Net.Calendar;
 
 namespace ICSReader
 {
@@ -13,6 +18,71 @@ namespace ICSReader
         ///     Used to keep track if we already did write an empty line
         /// </summary>
         private static bool _emptyLineWritten;
+        #endregion
+
+        #region CheckFileNameAndOutputFolder
+        /// <summary>
+        ///     Checks if the <paramref name="inputFile" /> and <paramref name="outputFolder" /> is valid
+        /// </summary>
+        /// <param name="inputFile"></param>
+        /// <param name="outputFolder"></param>
+        /// <exception cref="ArgumentNullException">Raised when the <paramref name="inputFile" /> or <paramref name="outputFolder" /> is null or empty</exception>
+        /// <exception cref="FileNotFoundException">Raised when the <paramref name="inputFile" /> does not exists</exception>
+        /// <exception cref="DirectoryNotFoundException">Raised when the <paramref name="outputFolder" /> does not exist</exception>
+        /// <exception cref="ICSFileTypeNotSupported">Raised when the extension is not .ics</exception>
+        private static void CheckFileNameAndOutputFolder(string inputFile, string outputFolder)
+        {
+            if (string.IsNullOrEmpty(inputFile))
+                throw new ArgumentNullException(inputFile);
+
+            if (string.IsNullOrEmpty(outputFolder))
+                throw new ArgumentNullException(outputFolder);
+
+            if (!File.Exists(inputFile))
+                throw new FileNotFoundException(inputFile);
+
+            if (!Directory.Exists(outputFolder))
+                throw new DirectoryNotFoundException(outputFolder);
+
+            var extension = Path.GetExtension(inputFile);
+            if (string.IsNullOrEmpty(extension))
+                throw new ICSFileTypeNotSupported("Expected .ics extension on the inputFile");
+
+            extension = extension.ToLowerInvariant();
+
+            switch (extension)
+            {
+                case ".ics":
+                    return;
+
+                default:
+                    throw new ICSFileTypeNotSupported("Wrong file extension, expected .ics");
+            }
+        }
+        #endregion
+
+        #region ExtractToFolder
+        /// <summary>
+        /// This method will read the given <paramref name="inputFile"/> convert it to HTML and write it to the <paramref name="outputFolder"/>
+        /// </summary>
+        /// <param name="inputFile">The vcf file</param>
+        /// <param name="outputFolder">The folder where to save the converted vcf file</param>
+        /// <returns>String array containing the full path to the converted VCF file</returns>
+        /// <exception cref="ArgumentNullException">Raised when the <paramref name="inputFile" /> or <paramref name="outputFolder" /> is null or empty</exception>
+        /// <exception cref="FileNotFoundException">Raised when the <paramref name="inputFile" /> does not exists</exception>
+        /// <exception cref="DirectoryNotFoundException">Raised when the <paramref name="outputFolder" /> does not exist</exception>
+        /// <exception cref="ICSFileTypeNotSupported">Raised when the extension is not .ics</exception>
+        public List<string> ExtractToFolder(string inputFile, string outputFolder)
+        {
+            outputFolder = FileManager.CheckForBackSlash(outputFolder);
+            CheckFileNameAndOutputFolder(inputFile, outputFolder);
+
+            using (TextReader textReader = File.OpenText(inputFile))
+            {
+                var calender = Calendar.Load(textReader);
+                return WriteCalender(calender, outputFolder);
+            }
+        }
         #endregion
 
         #region WriteTable methods
@@ -43,65 +113,7 @@ namespace ICSReader
                 newText += HttpUtility.HtmlEncode(line) + "<br/>";
 
             table.AppendLine(
-                "<tr style=\"height: 18px; vertical-align: top; \"><td style=\"font-weight: bold; white-space:nowrap;\">" +
-                HttpUtility.HtmlEncode(label) + ":</td><td>" + newText + "</td></tr>");
-
-            _emptyLineWritten = false;
-        }
-
-        /// <summary>
-        ///     Writes a row to the table without Html encoding the <paramref name="text" />
-        /// </summary>
-        /// <param name="header">The <see cref="StringBuilder" /> object that is used to write a table</param>
-        /// <param name="label">The label text that needs to be written</param>
-        /// <param name="text">The text that needs to be written after the <paramref name="label" /></param>
-        private static void WriteTableRowNoEncoding(StringBuilder header,
-                                                    string label,
-                                                    string text)
-        {
-            text = text.Replace("\n", "<br/>");
-
-            header.AppendLine(
-                "<tr style=\"height: 18px; vertical-align: top; \"><td style=\"font-weight: bold; white-space:nowrap; \">" +
-                HttpUtility.HtmlEncode(label) + ":</td><td>" + text + "</td></tr>");
-
-            _emptyLineWritten = false;
-        }
-
-        /// <summary>
-        ///     Writes a row tot the table and makes <paramref name="text"/> click able (hyperlink) />
-        /// </summary>
-        /// <param name="header">The <see cref="StringBuilder" /> object that is used to write a table</param>
-        /// <param name="label">The label text that needs to be written</param>
-        /// <param name="hyperlink">The hyperlink</param>
-        /// <param name="text">The text for the hyperlink</param>
-        private static void WriteTableRowHyperLink(StringBuilder header,
-                                                   string label,
-                                                   string hyperlink,
-                                                   string text)
-        {
-            text = text.Replace("\n", "<br/>");
-
-            header.AppendLine(
-                "<tr style=\"height: 18px; vertical-align: top; \"><td style=\"font-weight: bold; white-space:nowrap; \">" +
-                HttpUtility.HtmlEncode(label) + ":</td><td><a href=\"" + hyperlink + "\">" + text + "<a></td></tr>");
-
-            _emptyLineWritten = false;
-        }
-
-        /// <summary>
-        ///     Writes a row tot the table and inserts the given <paramref name="imageUrl"/>
-        /// </summary>
-        /// <param name="header">The <see cref="StringBuilder" /> object that is used to write a table</param>
-        /// <param name="label">The label text that needs to be written</param>
-        /// <param name="imageUrl">The url to the image</param>
-        private static void WriteTableRowImage(StringBuilder header,
-                                               string label,
-                                               string imageUrl)
-        {
-            header.AppendLine(
-                "<tr style=\"height: 18px; vertical-align: top; \"><td style=\"font-weight: bold; white-space:nowrap; \">" +
-                HttpUtility.HtmlEncode(label) + ":</td><td><img src=\"" + imageUrl + "\"></td></tr>");
+                $"<tr style=\"height: 18px; vertical-align: top; \"><td style=\"font-weight: bold; white-space:nowrap;\">{HttpUtility.HtmlEncode(label)}:</td><td>{newText}</td></tr>");
 
             _emptyLineWritten = false;
         }
@@ -137,301 +149,115 @@ namespace ICSReader
         /// </summary>
         /// <param name="calendar"><see cref="Calendar" /></param>
         /// <param name="outputFolder">The folder where we need to write the output</param>
-        /// <param name="hyperlinks">When <c>true</c> then hyperlinks are generated for the To, CC, BCC and attachments</param>
         /// <returns></returns>
-        private List<string> WriteCalender(Calendar calendar, string outputFolder, bool hyperlinks)
+        private List<string> WriteCalender(Calendar calendar, string outputFolder)
         {
             var fileName = Path.Combine(outputFolder, "calender.html");
             var files = new List<string> { fileName };
 
             var output = new StringBuilder();
 
-            // Start of table
-            WriteTableStart(output);
+            foreach (var calenderEvent in calendar.Events)
+            {
+                // Start of table
+                WriteTableStart(output);
 
-            //var i = 1;
-            //var count = calendar;
+                if (calenderEvent.Created != null)
+                    WriteTableRow(output, LanguageConsts.DtStart, calenderEvent.Created.ToString(LanguageConsts.DateTimeFormat, CultureInfo.InvariantCulture));
 
-            //foreach (var photo in vCard.Photos)
-            //{
-            //    string photoLabel;
-            //    if (count > 1)
-            //        photoLabel = LanguageConsts.PhotoLabel + " " + i;
-            //    else
-            //        photoLabel = LanguageConsts.PhotoLabel;
+                if (calenderEvent.LastModified != null)
+                    WriteTableRow(output, LanguageConsts.DtStart, calenderEvent.LastModified.ToString(LanguageConsts.DateTimeFormat, CultureInfo.InvariantCulture));
 
-            //    if (photo.IsLoaded)
-            //    {
-            //        var tempFileName = Path.Combine(outputFolder, Guid.NewGuid() + ".png");
-            //        var bitmap = photo.GetBitmap();
-            //        bitmap.Save(tempFileName, ImageFormat.Png);
-            //        files.Add(tempFileName);
-            //        WriteTableRowImage(output, photoLabel, tempFileName);
-            //    }
-            //    else
-            //    {
-            //        if (hyperlinks)
-            //            WriteTableRowHyperLink(output, photoLabel, photo.Url.ToString(), photo.Url.ToString());
-            //        else
-            //            WriteTableRowImage(output, photoLabel, photo.Url.ToString());
-            //    }
+                WriteEmptyTableRow(output);
 
-            //    i += 1;
-            //}
+                if (!string.IsNullOrEmpty(calenderEvent.Organizer?.CommonName))
+                    WriteTableRow(output, LanguageConsts.OrganizerName, calenderEvent.Organizer.CommonName);
+                
+                // Attendees
+                if (calenderEvent.Attendees?.Count > 0)
+                {
+                    var attendees = new List<string>();
 
-            //// Full name
-            //if (!string.IsNullOrEmpty(vCard.FormattedName))
-            //    WriteTableRow(output, LanguageConsts.DisplayNameLabel, vCard.FormattedName);
+                    foreach (var attendee in calenderEvent.Attendees)
+                        attendees.Add($"{attendee.CommonName}{(!string.IsNullOrWhiteSpace(attendee.Role) ? $" ({attendee.Role})" : string.Empty)} ");
 
-            //// Last name
-            //if (!string.IsNullOrEmpty(vCard.FamilyName))
-            //    WriteTableRow(output, LanguageConsts.SurNameLabel, vCard.FamilyName);
+                    WriteTableRow(output, LanguageConsts.Attendee, string.Join("; ", attendees));
+                }
+                    
+                WriteEmptyTableRow(output);
 
-            //// First name
-            //if (!string.IsNullOrEmpty(vCard.GivenName))
-            //    WriteTableRow(output, LanguageConsts.GivenNameLabel,
-            //        vCard.GivenName);
+                if (calenderEvent.DtStart != null)
+                    WriteTableRow(output, LanguageConsts.DtStart, calenderEvent.DtStart.AsSystemLocal.ToString(LanguageConsts.DateTimeFormat, CultureInfo.InvariantCulture));
 
-            //// Job title
-            //if (!string.IsNullOrEmpty(vCard.Title))
-            //    WriteTableRow(output, LanguageConsts.FunctionLabel,
-            //        vCard.Title);
+                if (calenderEvent.DtEnd != null)
+                    WriteTableRow(output, LanguageConsts.DtEnd, calenderEvent.DtEnd.AsSystemLocal.ToString(LanguageConsts.DateTimeFormat, CultureInfo.InvariantCulture));
 
-            //// Department
-            //if (!string.IsNullOrEmpty(vCard.Department))
-            //    WriteTableRow(output, LanguageConsts.DepartmentLabel,
-            //        vCard.Department);
+                WriteTableRow(output, LanguageConsts.Duration, calenderEvent.Duration.ToString());
 
-            //// Company
-            //if (!string.IsNullOrEmpty(vCard.Organization))
-            //    WriteTableRow(output, LanguageConsts.CompanyLabel, vCard.Organization);
+                WriteTableRow(output, LanguageConsts.IsAllDay, calenderEvent.IsAllDay ? LanguageConsts.Yes : LanguageConsts.No);
 
-            //// Empty line
-            //WriteEmptyTableRow(output);
+                WriteEmptyTableRow(output);
 
-            //if (vCard.DeliveryLabels.Count == 0)
-            //    foreach (var deliveryAddress in vCard.DeliveryAddresses)
-            //    {
-            //        var address = (!string.IsNullOrWhiteSpace(deliveryAddress.Street) ? deliveryAddress.Street : string.Empty) + Environment.NewLine +
-            //            (!string.IsNullOrWhiteSpace(deliveryAddress.PostalCode) ? deliveryAddress.PostalCode : string.Empty) + " " +
-            //            (!string.IsNullOrWhiteSpace(deliveryAddress.City) ? deliveryAddress.City : string.Empty) + Environment.NewLine +
-            //            (!string.IsNullOrWhiteSpace(deliveryAddress.Region) ? deliveryAddress.Region : string.Empty) + Environment.NewLine +
-            //            (!string.IsNullOrWhiteSpace(deliveryAddress.Country) ? deliveryAddress.Country : string.Empty);
+                if (!string.IsNullOrWhiteSpace(calenderEvent.Location))
+                    WriteTableRow(output, LanguageConsts.Location, calenderEvent.Location);
 
-            //        // intl, postal, parcel, work
-            //        if (deliveryAddress.IsWork)
-            //            WriteTableRow(output, LanguageConsts.WorkAddressLabel, address);
-            //        else if (deliveryAddress.IsHome)
-            //            WriteTableRow(output, LanguageConsts.HomeAddressLabel, address);
-            //        else if (deliveryAddress.IsInternational)
-            //            WriteTableRow(output, LanguageConsts.InternationalAddressLabel, address);
-            //        else if (deliveryAddress.IsPostal)
-            //            WriteTableRow(output, LanguageConsts.PostalAddressLabel, address);
-            //        else if (deliveryAddress.IsParcel)
-            //            WriteTableRow(output, LanguageConsts.ParcelAddressLabel, address);
-            //        else if (deliveryAddress.IsDomestic)
-            //            WriteTableRow(output, LanguageConsts.DomesticAddressLabel, address);
-            //    }
+                WriteEmptyTableRow(output);
+                
+                if (!string.IsNullOrWhiteSpace(calenderEvent.Status))
+                    WriteTableRow(output, LanguageConsts.Status, calenderEvent.Status);
 
-            //// Business address
-            //foreach (var deliveryLabel in vCard.DeliveryLabels)
-            //{
-            //    switch (deliveryLabel.AddressType)
-            //    {
-            //        case DeliveryAddressTypes.Domestic:
-            //            WriteTableRow(output, LanguageConsts.DomesticAddressLabel, deliveryLabel.Text);
-            //            break;
+                WriteEmptyTableRow(output);
 
-            //        case DeliveryAddressTypes.Home:
-            //            WriteTableRow(output, LanguageConsts.HomeAddressLabel, deliveryLabel.Text);
-            //            break;
+                if (calenderEvent.Resources?.Count > 0)
+                    WriteTableRow(output, LanguageConsts.Resources, string.Join("; ", calenderEvent.Resources));
 
-            //        case DeliveryAddressTypes.International:
-            //            WriteTableRow(output, LanguageConsts.InternationalAddressLabel, deliveryLabel.Text);
-            //            break;
+                WriteEmptyTableRow(output);
+                
+                if (calenderEvent.Categories?.Count > 0)
+                    WriteTableRow(output, LanguageConsts.Categories, string.Join("; ", calenderEvent.Categories));
 
-            //        case DeliveryAddressTypes.Parcel:
-            //            WriteTableRow(output, LanguageConsts.PostalAddressLabel, deliveryLabel.Text);
-            //            break;
+                WriteEmptyTableRow(output);
 
-            //        case DeliveryAddressTypes.Postal:
-            //            WriteTableRow(output, LanguageConsts.PostalAddressLabel, deliveryLabel.Text);
-            //            break;
+                if (!string.IsNullOrWhiteSpace(calenderEvent.Description))
+                    WriteTableRow(output, LanguageConsts.Description, calenderEvent.Description);
 
-            //        case DeliveryAddressTypes.Work:
-            //            WriteTableRow(output, LanguageConsts.WorkAddressLabel, deliveryLabel.Text);
-            //            break;
+                WriteEmptyTableRow(output);
+                
+                if (calenderEvent.Comments?.Count > 0)
+                    WriteTableRow(output, LanguageConsts.Comments, string.Join("; ", calenderEvent.Comments));
 
-            //        case DeliveryAddressTypes.Default:
-            //            WriteTableRow(output, LanguageConsts.OtherAddressLabel, deliveryLabel.Text);
-            //            break;
-            //    }
-            //}
+                WriteEmptyTableRow(output);
 
-            //// Instant messaging
-            //if (!string.IsNullOrEmpty(vCard.InstantMessagingAddress))
-            //    WriteTableRow(output, LanguageConsts.InstantMessagingAddressLabel, vCard.InstantMessagingAddress);
+                if (!string.IsNullOrWhiteSpace(calenderEvent.Summary))
+                    WriteTableRow(output, LanguageConsts.Summary, calenderEvent.Summary);
 
-            //// Empty line
-            //WriteEmptyTableRow(output);
+                WriteEmptyTableRow(output);
+                
+                if (calenderEvent.Contacts?.Count > 0)
+                    WriteTableRow(output, LanguageConsts.Contacts, string.Join("; ", calenderEvent.Contacts));
 
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Work, PhoneTypes.WorkVoice });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Assistant, PhoneTypes.VoiceAssistant });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Company, PhoneTypes.VoiceCompany });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Home, PhoneTypes.HomeVoice });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Cellular, PhoneTypes.CellularVoice });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Car, PhoneTypes.CarVoice });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Radio, PhoneTypes.VoiceRadio });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Pager, PhoneTypes.VoicePager });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Callback, PhoneTypes.VoiceCallback });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Voice });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Preferred });
+                WriteTableEnd(output);
 
-            //// Telex
-            //foreach (var email in vCard.EmailAddresses)
-            //{
-            //    switch (email.EmailType)
-            //    {
-            //        case EmailAddressType.Telex:
-            //            WriteTableRow(output, LanguageConsts.TelexNumberLabel, email.ToString());
-            //            break;
-            //    }
-            //}
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Ttytdd });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Isdn });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.Fax });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.WorkFax });
-            //WriteTelephone(vCard, output, new List<PhoneTypes> { PhoneTypes.HomeFax });
+                // Write the body to a file
+                File.WriteAllText(FileManager.FileExistsMakeNew(fileName), output.ToString(), Encoding.UTF8);
 
-            //// Empty line
-            //WriteEmptyTableRow(output);
+                var i = 1;
 
-            //i = 1;
+                foreach (var attachment in calenderEvent.Attachments)
+                {
+                    var attachmentFileName = $"attachment{i}";
+                    var fileTypeFileInfo = FileTypeSelector.GetFileTypeFileInfo(attachment.Data);
 
-            //foreach (var email in vCard.EmailAddresses)
-            //{
-            //    switch (email.EmailType)
-            //    {
-            //        case EmailAddressType.AOl:
-            //        case EmailAddressType.AppleLink:
-            //        case EmailAddressType.AttMail:
-            //        case EmailAddressType.CompuServe:
-            //        case EmailAddressType.EWorld:
-            //        case EmailAddressType.IBMMail:
-            //        case EmailAddressType.Internet:
-            //        case EmailAddressType.MCIMail:
-            //        case EmailAddressType.PowerShare:
-            //        case EmailAddressType.Prodigy:
-            //            if (i > 1)
-            //                WriteEmptyTableRow(output);
+                    if (fileTypeFileInfo != null)
+                    {
+                        attachmentFileName = Path.Combine(outputFolder, attachmentFileName + fileTypeFileInfo.Extension);
+                        attachmentFileName = FileManager.FileExistsMakeNew(attachmentFileName);
+                        File.WriteAllBytes(attachmentFileName, attachment.Data);
+                    }
 
-            //            if (hyperlinks)
-            //                WriteTableRowHyperLink(output, LanguageConsts.EmailEmailAddressLabel + " " + i, "mailto:" + email, email.ToString());
-            //            else
-            //                WriteTableRowNoEncoding(output, LanguageConsts.EmailEmailAddressLabel + " " + i, email.ToString());
-
-            //            if (!string.IsNullOrEmpty(vCard.FormattedName))
-            //                WriteTableRow(output, LanguageConsts.EmailDisplayNameLabel + " " + i,
-            //                    vCard.FormattedName + " (" + email + ")");
-
-            //            i += 1;
-            //            break;
-
-            //        case EmailAddressType.Telex:
-            //            // Ignore
-            //            break;
-
-            //    }
-            //}
-
-            //// Empty line
-            //WriteEmptyTableRow(output);
-
-            //// Birthday
-            //if (vCard.BirthDate != null)
-            //    WriteTableRow(output, LanguageConsts.BirthdayLabel,
-            //        ((DateTime)vCard.BirthDate).ToString(LanguageConsts.DataFormat));
-
-            //// Anniversary
-            //if (vCard.Anniversary != null)
-            //    WriteTableRow(output, LanguageConsts.WeddingAnniversaryLabel,
-            //        ((DateTime)vCard.Anniversary).ToString(LanguageConsts.DataFormat));
-
-            //// Spouse/Partner
-            //if (!string.IsNullOrEmpty(vCard.Spouse))
-            //    WriteTableRow(output, LanguageConsts.SpouseNameLabel,
-            //        vCard.Spouse);
-
-            //// Profession
-            //if (!string.IsNullOrEmpty(vCard.Role))
-            //    WriteTableRow(output, LanguageConsts.ProfessionLabel,
-            //        vCard.Role);
-
-            //// Assistant
-            //if (!string.IsNullOrEmpty(vCard.Assistant))
-            //    WriteTableRow(output, LanguageConsts.AssistantTelephoneNumberLabel,
-            //        vCard.Assistant);
-
-
-            //// Web page
-            //var firstRow = true;
-            //foreach (var webpage in vCard.Websites)
-            //{
-            //    if (!string.IsNullOrEmpty(webpage.Url))
-            //    {
-            //        if (firstRow)
-            //        {
-            //            firstRow = false;
-            //            if (hyperlinks)
-            //                WriteTableRowHyperLink(output, LanguageConsts.HtmlLabel, webpage.Url, webpage.Url);
-            //            else
-            //                WriteTableRow(output, LanguageConsts.HtmlLabel, webpage.Url);
-            //        }
-            //        else
-            //        {
-            //            if (hyperlinks)
-            //                WriteTableRowHyperLink(output, string.Empty, webpage.Url, webpage.Url);
-            //            else
-            //                WriteTableRow(output, string.Empty, webpage.Url);
-            //        }
-            //    }
-            //}
-
-            //// Empty line
-            //WriteEmptyTableRow(output);
-
-            //// Categories
-            //var categories = vCard.Categories;
-            //if (categories != null && categories.Count > 0)
-            //    WriteTableRow(output, LanguageConsts.CategoriesLabel,
-            //        String.Join("; ", categories));
-
-            //// Empty line
-            //WriteEmptyTableRow(output);
-
-            //// Empty line
-            //firstRow = true;
-            //if (vCard.Notes != null && vCard.Notes.Count > 0)
-            //{
-            //    foreach (var note in vCard.Notes)
-            //    {
-            //        if (!string.IsNullOrWhiteSpace(note.Text))
-            //        {
-            //            if (firstRow)
-            //            {
-            //                firstRow = false;
-            //                WriteTableRow(output, LanguageConsts.NotesLabel, note.Text);
-            //            }
-            //            else
-            //                WriteTableRow(output, string.Empty, note.Text);
-            //        }
-            //    }
-            //}
-
-            //WriteTableEnd(output);
-
-            //// Write the body to a file
-            //File.WriteAllText(fileName, output.ToString(), Encoding.UTF8);
+                    i += 1;
+                }
+            }
 
             return files;
         }

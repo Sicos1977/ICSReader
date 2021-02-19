@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Localization\LanguageConsts.nl.resx">
+      <LastGenOutput>LanguageConsts.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
     <EmbeddedResource Update="Localization\LanguageConsts.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>LanguageConsts.Designer.cs</LastGenOutput>

@@ -118,60 +118,60 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Attendee" xml:space="preserve">
-    <value>Attendee</value>
+    <value>Deelnemer</value>
   </data>
   <data name="Categories" xml:space="preserve">
-    <value>Categories</value>
+    <value>Categorieën</value>
   </data>
   <data name="Comments" xml:space="preserve">
-    <value>Comments</value>
+    <value>Opmerkingen</value>
   </data>
   <data name="Contacts" xml:space="preserve">
     <value>Contacts</value>
   </data>
   <data name="Created" xml:space="preserve">
-    <value>Created</value>
+    <value>Contacten</value>
   </data>
   <data name="DateTimeFormat" xml:space="preserve">
     <value>yyyy-MM-dd HH:mm:ss</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>Description</value>
+    <value>Omschrijving</value>
   </data>
   <data name="DtEnd" xml:space="preserve">
-    <value>Meeting end</value>
+    <value>Einde vergadering</value>
   </data>
   <data name="DtStart" xml:space="preserve">
-    <value>Meeting start</value>
+    <value>Start vergadering</value>
   </data>
   <data name="Duration" xml:space="preserve">
-    <value>Duration</value>
+    <value>Duur</value>
   </data>
   <data name="IsAllDay" xml:space="preserve">
-    <value>Is all day</value>
+    <value>Is de hele dag</value>
   </data>
   <data name="LastModified" xml:space="preserve">
-    <value>Last modified</value>
+    <value>Laatst gewijzigd</value>
   </data>
   <data name="Location" xml:space="preserve">
-    <value>Location</value>
+    <value>Plaats</value>
   </data>
   <data name="No" xml:space="preserve">
-    <value>No</value>
+    <value>Nee</value>
   </data>
   <data name="OrganizerName" xml:space="preserve">
-    <value>Organizer name</value>
+    <value>Organisator naam</value>
   </data>
   <data name="Resources" xml:space="preserve">
-    <value>Resources</value>
+    <value>Middelen</value>
   </data>
   <data name="Status" xml:space="preserve">
     <value>Status</value>
   </data>
   <data name="Summary" xml:space="preserve">
-    <value>Summary</value>
+    <value>Overzicht</value>
   </data>
   <data name="Yes" xml:space="preserve">
-    <value>Yes</value>
+    <value>Ja</value>
   </data>
 </root>
