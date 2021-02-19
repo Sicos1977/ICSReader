@@ -5,7 +5,6 @@ using System.Windows.Forms;
 using ICSReader;
 using ICSViewer.Helpers;
 using ICSViewer.Properties;
-using ICSViewer.Helpers;
 
 //
 // ViewerForm
