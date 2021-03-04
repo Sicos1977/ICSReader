@@ -64,7 +64,7 @@ namespace ICSReader
         ///     Creates this object and sets it's needed properties
         /// </summary>
         /// <param name="logStream">When set then logging is written to this stream for all conversions. If
-        /// you want a separate log for each conversion then set the logstream on the <see cref="Convert"/> method</param>
+        /// you want a separate log for each conversion then set the logstream on the <see cref="Read"/> method</param>
         public Reader(Stream logStream = null)
         {
             Logger.LogStream = logStream;
@@ -112,7 +112,7 @@ namespace ICSReader
         }
         #endregion
 
-        #region ExtractToFolder
+        #region Read
         /// <summary>
         /// This method will read the given <paramref name="inputFile"/> convert it to HTML and write it to the <paramref name="outputFolder"/>
         /// </summary>
